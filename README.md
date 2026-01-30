@@ -37,6 +37,8 @@ mill app.runMain examples.ScopeExample
 mill app.runMain examples.QueueExample
 mill app.runMain examples.HubExample
 mill app.runMain examples.PromiseExample
+mill app.runMain examples.SemaphoreExample
+mill app.runMain examples.ErrorExample
 
 # Open Scala REPL with project classpath
 mill app.console
@@ -56,7 +58,9 @@ app/
 │   ├── ScopeExample.scala     # Resource management with Scope
 │   ├── QueueExample.scala     # Fiber communication with Queue
 │   ├── HubExample.scala       # Pub/sub broadcast with Hub
-│   └── PromiseExample.scala   # One-time fiber synchronization
+│   ├── PromiseExample.scala   # One-time fiber synchronization
+│   ├── SemaphoreExample.scala # Concurrency limiting
+│   └── ErrorExample.scala     # Typed errors, defects & recovery
 └── test/src/
     ├── MainAppSpec.scala
     ├── LayerExampleSpec.scala
@@ -67,7 +71,9 @@ app/
     ├── ScopeExampleSpec.scala
     ├── QueueExampleSpec.scala
     ├── HubExampleSpec.scala
-    └── PromiseExampleSpec.scala
+    ├── PromiseExampleSpec.scala
+    ├── SemaphoreExampleSpec.scala
+    └── ErrorExampleSpec.scala
 ```
 
 ## Recommended Learning Order
@@ -75,15 +81,17 @@ app/
 If you are new to ZIO, follow this order. Each topic builds on concepts from the previous one.
 
 1. **MainApp** — understand what a ZIO effect is and how to run it
-2. **RefExample** — learn how ZIO handles mutable state safely
-3. **ScheduleExample** — repeat and retry effects with policies
-4. **LayerExample** — structure your app with dependency injection
-5. **ScopeExample** — manage resources (files, connections) safely
-6. **StreamExample** — process sequences of data
-7. **QueueExample** — send messages between fibers
-8. **HubExample** — broadcast messages to multiple consumers
-9. **PromiseExample** — synchronize fibers with one-time signals
-10. **STMExample** — coordinate complex shared state atomically
+2. **ErrorExample** — learn how ZIO models and recovers from errors
+3. **RefExample** — learn how ZIO handles mutable state safely
+4. **ScheduleExample** — repeat and retry effects with policies
+5. **LayerExample** — structure your app with dependency injection
+6. **ScopeExample** — manage resources (files, connections) safely
+7. **StreamExample** — process sequences of data
+8. **SemaphoreExample** — limit how many fibers run concurrently
+9. **QueueExample** — send messages between fibers
+10. **HubExample** — broadcast messages to multiple consumers
+11. **PromiseExample** — synchronize fibers with one-time signals
+12. **STMExample** — coordinate complex shared state atomically
 
 ---
 
@@ -370,6 +378,91 @@ transfer(alice, bob, 300L).commit
 
 ---
 
+### 11. Semaphore — Limiting Concurrency
+
+> **Core idea:** A `Semaphore` controls how many fibers can run a section of code at the same time. It has a fixed number of "permits" — a fiber must acquire a permit before proceeding and releases it when done.
+
+**Real-world analogy:** A parking lot with 5 spaces. Cars (fibers) must wait at the entrance when all spaces (permits) are taken. When a car leaves, the next one can enter.
+
+**What you will learn:**
+
+- **`Semaphore.make(permits = N)`** — create a semaphore with N permits
+- **`withPermit`** — acquire one permit, run the effect, and automatically release the permit when done (even on failure). This is the most common operation:
+
+```scala
+val sem = Semaphore.make(permits = 3)
+// at most 3 fibers execute this block simultaneously
+sem.withPermit {
+  callExternalApi()
+}
+```
+
+- **Mutex** — a semaphore with 1 permit is a mutex (exclusive lock). Only one fiber can enter at a time. The example proves no two fibers overlap.
+- **`withPermits(n)`** — acquire multiple permits at once. Useful when a "heavy" task needs more resources than a "light" task.
+- **`available`** — check how many permits are currently free, without blocking
+
+**Common patterns:**
+
+```scala
+// Rate limiter: at most 10 concurrent API calls
+val limiter = Semaphore.make(permits = 10)
+ZIO.foreachPar(urls)(url => limiter.withPermit(fetch(url)))
+
+// Mixed workloads: heavy tasks need 3 permits, light tasks need 1
+sem.withPermits(3)(heavyTask)
+sem.withPermit(lightTask)
+```
+
+---
+
+### 12. Error Handling — Failures, Defects & Recovery
+
+> **Core idea:** ZIO distinguishes between **failures** (expected, typed errors in the `E` channel) and **defects** (unexpected bugs that crash the fiber). This lets you handle business errors precisely and let real bugs surface.
+
+**Failures vs Defects:**
+
+| | Failure | Defect |
+|---|---|---|
+| Created by | `ZIO.fail(value)` | `ZIO.die(exception)`, thrown in unsafe code |
+| Visible in type | Yes — `ZIO[R, E, A]` | No — not in the type signature |
+| Caught by `catchAll` | Yes | No |
+| Caught by `catchAllCause` | Yes | Yes |
+| Intent | Business error (not found, validation) | Bug (null pointer, assertion) |
+
+**What you will learn:**
+
+- **Typed error hierarchy** — define a `sealed trait AppError` with case classes for each error. The compiler ensures you handle every case:
+
+```scala
+sealed trait AppError
+case class NotFound(id: String)        extends AppError
+case class ValidationError(msg: String) extends AppError
+```
+
+- **`catchAll`** — handle all typed errors, must be exhaustive
+- **`catchSome`** — handle only specific errors via partial function, unmatched errors propagate
+- **`mapError`** — transform the error type (e.g., `AppError` → `String`)
+- **`orElse`** — try a fallback effect when the first one fails
+- **`fold` / `foldZIO`** — handle both success and failure in one expression. `foldZIO` allows effectful recovery.
+- **`ZIO.attempt`** — convert code that throws exceptions into a `ZIO[Any, Throwable, A]`, moving exceptions into the error channel
+- **`refineToOrDie`** — narrow a broad error type (`Throwable`) to a specific one (`NumberFormatException`). Errors that don't match become defects.
+- **`Cause`** — the full story of why an effect failed, including failures, defects, and interruptions
+- **`catchAllCause`** — catch everything including defects. Use `cause.isDie` to distinguish defects from failures.
+
+```scala
+// Typed error handling — compiler verifies exhaustiveness
+findUser(id).catchAll {
+  case NotFound(id)       => ZIO.succeed(defaultUser)
+  case ValidationError(m) => ZIO.succeed(errorResponse(m))
+}
+
+// Convert exceptions → typed errors
+ZIO.attempt(Integer.parseInt(input))
+  .refineToOrDie[NumberFormatException]
+```
+
+---
+
 ## How ZIO Concurrency Primitives Compare
 
 | Primitive | Mutability | Writers | Readers | Use case |
@@ -378,6 +471,7 @@ transfer(alice, bob, 300L).commit
 | **Promise** | Write once | One fiber | Many fibers | Signal, handoff, gate |
 | **Queue** | Ongoing | Producers | One consumer per message | Work distribution |
 | **Hub** | Ongoing | Publishers | All subscribers | Event broadcast |
+| **Semaphore** | Fixed permits | Any fiber | Any fiber | Rate limiting, mutex |
 | **STM/TRef** | Many updates | Transactional | Transactional | Multi-variable atomic updates |
 
 ## Resources
