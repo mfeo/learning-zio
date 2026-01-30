@@ -17,13 +17,19 @@ app/
 │   ├── LayerExample.scala     # ZLayer & dependency injection
 │   ├── StreamExample.scala    # ZIO Streams, ZPipeline, ZSink
 │   ├── ScheduleExample.scala  # Repeat, retry & schedule composition
-│   └── RefExample.scala       # Atomic mutable state with Ref
+│   ├── RefExample.scala       # Atomic mutable state with Ref
+│   ├── STMExample.scala       # Software Transactional Memory
+│   ├── ScopeExample.scala     # Resource management with Scope
+│   └── QueueExample.scala     # Fiber communication with Queue
 └── test/src/
     ├── MainAppSpec.scala
     ├── LayerExampleSpec.scala
     ├── StreamExampleSpec.scala
     ├── ScheduleExampleSpec.scala
-    └── RefExampleSpec.scala
+    ├── RefExampleSpec.scala
+    ├── STMExampleSpec.scala
+    ├── ScopeExampleSpec.scala
+    └── QueueExampleSpec.scala
 ```
 
 ## Topics Covered
@@ -35,6 +41,9 @@ app/
 | **StreamExample** | `ZStream`, `map`/`filter`, `ZPipeline` composition (`>>>`), `ZSink.sum`, `.grouped`, `unfold` (Fibonacci), `.merge` |
 | **ScheduleExample** | `Schedule.recurs`, `Schedule.spaced`, `&&` composition, `retry`, `retryOrElse`, `collectAll` |
 | **RefExample** | `Ref.make`, `get`/`set`/`update`/`updateAndGet`, `modify`, concurrent counter, state machine |
+| **STMExample** | `TRef`, `STM.atomically`, `commit`, atomic transfers, concurrent consistency, `TMap` |
+| **ScopeExample** | `ZIO.acquireRelease`, `ZIO.scoped`, reverse release order, safety on failure, `ZLayer.scoped` |
+| **QueueExample** | `Queue.bounded`/`unbounded`, `offer`/`take`, producer-consumer, `takeAll`/`takeUpTo`, `poll`, back-pressure |
 
 ## Getting Started
 
@@ -58,6 +67,9 @@ mill app.runMain examples.LayerExample
 mill app.runMain examples.StreamExample
 mill app.runMain examples.ScheduleExample
 mill app.runMain examples.RefExample
+mill app.runMain examples.STMExample
+mill app.runMain examples.ScopeExample
+mill app.runMain examples.QueueExample
 
 # Open Scala REPL with project classpath
 mill app.console
