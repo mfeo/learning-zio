@@ -20,7 +20,9 @@ app/
 │   ├── RefExample.scala       # Atomic mutable state with Ref
 │   ├── STMExample.scala       # Software Transactional Memory
 │   ├── ScopeExample.scala     # Resource management with Scope
-│   └── QueueExample.scala     # Fiber communication with Queue
+│   ├── QueueExample.scala     # Fiber communication with Queue
+│   ├── HubExample.scala       # Pub/sub broadcast with Hub
+│   └── PromiseExample.scala   # One-time fiber synchronization
 └── test/src/
     ├── MainAppSpec.scala
     ├── LayerExampleSpec.scala
@@ -29,7 +31,9 @@ app/
     ├── RefExampleSpec.scala
     ├── STMExampleSpec.scala
     ├── ScopeExampleSpec.scala
-    └── QueueExampleSpec.scala
+    ├── QueueExampleSpec.scala
+    ├── HubExampleSpec.scala
+    └── PromiseExampleSpec.scala
 ```
 
 ## Topics Covered
@@ -44,6 +48,8 @@ app/
 | **STMExample** | `TRef`, `STM.atomically`, `commit`, atomic transfers, concurrent consistency, `TMap` |
 | **ScopeExample** | `ZIO.acquireRelease`, `ZIO.scoped`, reverse release order, safety on failure, `ZLayer.scoped` |
 | **QueueExample** | `Queue.bounded`/`unbounded`, `offer`/`take`, producer-consumer, `takeAll`/`takeUpTo`, `poll`, back-pressure |
+| **HubExample** | `Hub.bounded`, `subscribe`, `publish`, fan-out processing, concurrent pub/sub with fibers |
+| **PromiseExample** | `Promise.make`, `succeed`/`fail`/`await`, `isDone`, gate pattern, fiber handoff, idempotent completion |
 
 ## Getting Started
 
@@ -70,6 +76,8 @@ mill app.runMain examples.RefExample
 mill app.runMain examples.STMExample
 mill app.runMain examples.ScopeExample
 mill app.runMain examples.QueueExample
+mill app.runMain examples.HubExample
+mill app.runMain examples.PromiseExample
 
 # Open Scala REPL with project classpath
 mill app.console
