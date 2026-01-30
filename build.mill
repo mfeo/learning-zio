@@ -1,0 +1,21 @@
+package build
+
+import mill._
+import mill.scalalib._
+
+object app extends ScalaModule {
+  def scalaVersion = "3.6.4"
+
+  def mvnDeps = Seq(
+    mvn"dev.zio::zio:2.1.16",
+    mvn"dev.zio::zio-streams:2.1.16"
+  )
+
+  object test extends ScalaTests {
+    def mvnDeps = Seq(
+      mvn"dev.zio::zio-test:2.1.16",
+      mvn"dev.zio::zio-test-sbt:2.1.16"
+    )
+    def testFramework = "zio.test.sbt.ZTestFramework"
+  }
+}
