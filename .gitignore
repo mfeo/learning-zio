@@ -2,5 +2,6 @@ out/
 .idea/
 .bsp/
 .metals/
+.vscode/
 *.class
 *.jar
