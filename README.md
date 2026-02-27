@@ -41,6 +41,10 @@ mill app.runMain examples.HubExample
 mill app.runMain examples.PromiseExample
 mill app.runMain examples.SemaphoreExample
 mill app.runMain examples.ErrorExample
+mill app.runMain examples.ConcurrencyExample
+mill app.runMain examples.LoggingExample
+mill app.runMain examples.AspectExample
+mill app.runMain examples.FiberRefExample
 
 # Open Scala REPL with project classpath
 mill app.console
@@ -62,7 +66,11 @@ app/
 │   ├── HubExample.scala       # Pub/sub broadcast with Hub
 │   ├── PromiseExample.scala   # One-time fiber synchronization
 │   ├── SemaphoreExample.scala # Concurrency limiting
-│   └── ErrorExample.scala     # Typed errors, defects & recovery
+│   ├── ErrorExample.scala     # Typed errors, defects & recovery
+│   ├── ConcurrencyExample.scala # Timeout, race, and parallel execution
+│   ├── LoggingExample.scala     # Logging, annotations, and spans
+│   ├── AspectExample.scala      # Aspect-oriented programming (ZIOAspect)
+│   └── FiberRefExample.scala    # Fiber-local storage (like ThreadLocal)
 └── test/src/
     ├── MainAppSpec.scala
     ├── LayerExampleSpec.scala
@@ -75,7 +83,12 @@ app/
     ├── HubExampleSpec.scala
     ├── PromiseExampleSpec.scala
     ├── SemaphoreExampleSpec.scala
-    └── ErrorExampleSpec.scala
+    ├── ErrorExampleSpec.scala
+    ├── ConcurrencyExampleSpec.scala
+    ├── LoggingExampleSpec.scala
+    ├── AspectExampleSpec.scala
+    ├── FiberRefExampleSpec.scala
+    └── TestEnvExampleSpec.scala
 ```
 
 ## Recommended Learning Order
@@ -94,6 +107,11 @@ If you are new to ZIO, follow this order. Each topic builds on concepts from the
 10. **HubExample** — broadcast messages to multiple consumers
 11. **PromiseExample** — synchronize fibers with one-time signals
 12. **STMExample** — coordinate complex shared state atomically
+13. **ConcurrencyExample** — timeout, race, and process tasks in parallel
+14. **LoggingExample** — structured logging with annotations and spans
+15. **AspectExample** — modify effect behavior non-invasively
+16. **FiberRefExample** — propagate context across fiber boundaries
+17. **TestEnvExample** — master the ZIO test environment (time travel, mocked console)
 
 ---
 
@@ -462,6 +480,67 @@ findUser(id).catchAll {
 ZIO.attempt(Integer.parseInt(input))
   .refineToOrDie[NumberFormatException]
 ```
+
+---
+
+### 13. Concurrency — Timeouts, Races, and Parallelism
+
+> **Core idea:** ZIO provides powerful combinators to manage concurrent tasks, handle timeouts, and race multiple effects against each other.
+
+**What you will learn:**
+
+- **`timeout`** — constrain the execution time of an effect. Returns `None` if the effect does not complete in time.
+- **`race`** — run multiple effects concurrently and return the result of the first one to succeed.
+- **`foreachPar` / `collectAllPar`** — execute a collection of effects in parallel.
+- **`withParallelism`** — limit the maximum number of concurrent executions to avoid overwhelming resources.
+
+---
+
+### 14. Logging — Structured and Contextual
+
+> **Core idea:** ZIO has a built-in logging facade. It supports structured logging with annotations and spans to make tracing requests easier.
+
+**What you will learn:**
+
+- **Basic Logging** — `ZIO.logInfo`, `ZIO.logError`, etc.
+- **Log Annotations** — add key-value pairs (like `userId` or `requestId`) to logs, automatically propagating them (similar to MDC).
+- **Log Spans** — measure and log the execution time of specific blocks of code.
+- **`ZTestLogger`** — capture and verify logs easily within ZIO tests.
+
+---
+
+### 15. ZIOAspect — Aspect-Oriented Effects
+
+> **Core idea:** Aspects (`@@`) allow you to modify the behavior of an effect (like adding retries, timeouts, or logging) without polluting its core business logic.
+
+**What you will learn:**
+
+- **Built-in Aspects** — applying built-in features like `ZIOAspect.retry` or `ZIOAspect.annotated` cleanly using the `@@` operator.
+- **Custom Aspects** — writing your own `ZIOAspect` to encapsulate reusable cross-cutting concerns (e.g., measuring execution time).
+
+---
+
+### 16. FiberRef — Fiber-Local Storage
+
+> **Core idea:** `FiberRef` provides a way to store data that is local to a specific fiber. It is the ZIO equivalent of Java's `ThreadLocal`, but designed for lightweight, highly concurrent environments.
+
+**What you will learn:**
+
+- **`FiberRef.make`** — create a reference with a default value.
+- **`locally`** — temporarily override the `FiberRef` value for a specific scoped block.
+- **Propagation** — child fibers automatically inherit the `FiberRef` values from their parent fiber at the time they are forked.
+
+---
+
+### 17. Test Environment — Time Travel and Mocks
+
+> **Core idea:** ZIO Test comes with built-in, controllable environments for Clock, Console, Random, and System. You rarely need external mocking libraries for these.
+
+**What you will learn:**
+
+- **`TestClock`** — instantly advance time (`TestClock.adjust(5.hours)`) to test long-running delays or timeouts without actually waiting.
+- **`TestConsole`** — simulate user input (`feedLines`) and assert console output (`output`) safely.
+- **`TestRandom`** — feed deterministic sequences of numbers to make random logic testable.
 
 ---
 

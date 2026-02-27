@@ -55,6 +55,10 @@ mill app.runMain examples.HubExample
 mill app.runMain examples.PromiseExample
 mill app.runMain examples.SemaphoreExample
 mill app.runMain examples.ErrorExample
+mill app.runMain examples.ConcurrencyExample
+mill app.runMain examples.LoggingExample
+mill app.runMain examples.AspectExample
+mill app.runMain examples.FiberRefExample
 
 # 開啟包含專案 classpath 的 Scala 互動式環境 (REPL)，方便隨時測試小段程式碼
 mill app.console
@@ -76,7 +80,11 @@ app/
 │   ├── HubExample.scala       # Hub：一對多的訊息廣播中心
 │   ├── PromiseExample.scala   # Promise：一次性的任務同步與交接
 │   ├── SemaphoreExample.scala # Semaphore：控制並行數量的號誌 (例如：API 速率限制)
-│   └── ErrorExample.scala     # Error：型別安全的錯誤處理與復原
+│   ├── ErrorExample.scala     # Error：型別安全的錯誤處理與復原
+│   ├── ConcurrencyExample.scala # 並發控制、超時與競速
+│   ├── LoggingExample.scala     # 結構化日誌與追蹤
+│   ├── AspectExample.scala      # 切面導向編程 (無侵入式修改)
+│   └── FiberRefExample.scala    # Fiber 區域儲存 (類似 ThreadLocal)
 └── test/src/
     └── (對應每個範例的單元測試檔案，例如 MainAppSpec.scala)
 ```
@@ -97,6 +105,11 @@ app/
 10. **HubExample** — 學習如何將一筆資料同時廣播給多個傾聽中的任務。
 11. **PromiseExample** — 學習等待某個條件達成（一次性訊號）再繼續執行的同步技巧。
 12. **STMExample** — 終極武器：如何像關聯式資料庫的 Transaction 一樣，以原子方式同時更新多個狀態。
+13. **ConcurrencyExample** — 學習如何設定超時、任務競速與平行處理多個任務。
+14. **LoggingExample** — 學習內建的強大日誌系統、標籤 (Annotations) 與執行追蹤 (Spans)。
+15. **AspectExample** — 學習使用切面 (`@@`) 來無侵入式地修改 Effect 邏輯 (如重試、超時記錄)。
+16. **FiberRefExample** — 學習 Fiber 等級的區域變數，用於在請求中傳遞 Context。
+17. **TestEnvExample** — 測試環境的魔法：時間旅行、模擬命令列輸入，不需額外 Mock 工具。
 
 ---
 
@@ -224,6 +237,67 @@ app/
 **您將學到什麼：**
 - 如何將容易拋出 Exception 的危險程式碼，轉換為安全的 ZIO Effect。
 - 使用 `catchAll` 來優雅地捕捉並處理錯誤，給予使用者友善的回應。
+
+---
+
+### 13. Concurrency — 並發控制、超時與競速
+
+> **核心概念：** ZIO 提供了強大的組合子來管理並發任務，包含設定執行超時、任務競速與平行處理。
+
+**您將學到什麼：**
+
+- **`timeout`** — 為任務設定時間上限。若超時未完成，會安全地中斷並回傳 `None`。
+- **`race`** — 讓多個任務同時起跑，只要第一個成功，就會自動取消其他落後的任務。
+- **`foreachPar` / `collectAllPar`** — 平行處理集合中的資料。
+- **`withParallelism`** — 限制平行處理的最大併發數，避免瞬間耗盡系統資源。
+
+---
+
+### 14. Logging — 結構化日誌與追蹤
+
+> **核心概念：** ZIO 2 內建了強大的日誌系統，無需額外依賴即可實作結構化日誌、標註與追蹤。
+
+**您將學到什麼：**
+
+- **基礎日誌** — `ZIO.logInfo`, `ZIO.logError` 等。
+- **日誌標註 (Annotations)** — 像 Java 的 MDC 一樣，將 `userId` 或 `requestId` 自動附帶在所有後續的日誌輸出中。
+- **日誌追蹤 (Spans)** — 測量某段程式區塊的執行時間並自動記錄。
+- **`ZTestLogger`** — 在測試中無縫驗證輸出的日誌內容。
+
+---
+
+### 15. ZIOAspect — 切面導向編程
+
+> **核心概念：** Aspect (`@@`) 讓你能以「無侵入式」的方法修改 Effect 行為（例如加上重試、記錄日誌），讓核心業務邏輯保持乾淨。
+
+**您將學到什麼：**
+
+- **內建 Aspect** — 透過 `@@` 語法糖優雅地套用 `ZIOAspect.retry` 等功能。
+- **自訂 Aspect** — 撰寫自己的 Aspect 來封裝重複的邏輯（例如：統一攔截錯誤或測量執行時間）。
+
+---
+
+### 16. FiberRef — Fiber 區域儲存
+
+> **核心概念：** `FiberRef` 就像是專為輕量級 Fiber 設計的 `ThreadLocal`，用來在同一個處理流程中自動傳遞 Context。
+
+**您將學到什麼：**
+
+- **`FiberRef.make`** — 建立帶有預設值的 Context 變數。
+- **`locally`** — 僅在特定的程式區塊內覆蓋變數值，離開區塊後自動還原。
+- **傳遞性 (Propagation)** — 子 Fiber 在建立 (`fork`) 的瞬間，會自動繼承父 Fiber 當時的 `FiberRef` 狀態。
+
+---
+
+### 17. Test Environment — 測試環境魔法
+
+> **核心概念：** ZIO Test 內建了可控制的 `TestClock`, `TestConsole`, `TestRandom` 等環境，讓你輕鬆測試依賴時間或系統 I/O 的程式。
+
+**您將學到什麼：**
+
+- **時間旅行 (`TestClock`)** — 需要等待 5 小時的程式碼？用 `TestClock.adjust(5.hours)` 瞬間跳轉時間，測試一秒完成。
+- **終端機模擬 (`TestConsole`)** — 用 `feedLines` 模擬使用者輸入，用 `output` 驗證輸出的字串。
+- **穩定隨機數 (`TestRandom`)** — 固定隨機序列，讓依賴隨機行為的測試也能百分之百可靠。
 
 ---
 
