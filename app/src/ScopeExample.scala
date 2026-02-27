@@ -5,6 +5,8 @@ import zio._
 object ScopeExample extends ZIOAppDefault:
 
   // Simulated resource with acquire/release logging
+  // Similar to try-catch-finally, but ZIO.acquireRelease guarantees the release
+  // action will always run, even if unexpected errors occur or the fiber is interrupted.
   case class DatabaseConn(id: String)
 
   def acquireConn(id: String): ZIO[Scope, Nothing, DatabaseConn] =

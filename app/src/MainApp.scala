@@ -2,6 +2,10 @@ import zio._
 
 object MainApp extends ZIOAppDefault:
 
+  // The core type in ZIO: ZIO[R, E, A]
+  // R (Environment): What does this effect need to run? (Any = needs nothing)
+  // E (Error): What kind of error might it fail with? (Throwable = might throw exceptions)
+  // A (Success): What value does it produce if successful? (Unit = produces nothing, just side effects)
   val myAppLogic: ZIO[Any, Throwable, Unit] =
     for
       _    <- Console.printLine("Hello! What is your name?")

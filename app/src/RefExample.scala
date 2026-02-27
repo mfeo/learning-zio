@@ -32,7 +32,10 @@ object RefExample extends ZIOAppDefault:
       _ <- Console.printLine(s"  Withdrew: $withdrawn, remaining: $remaining").orDie
     yield ()
 
-  // Concurrent counter: prove Ref is thread-safe
+  // Concurrent counter: prove Ref is thread-safe (prevents Race Conditions safely)
+  // Note: If we used a standard `var` here, multiple fibers reading/writing concurrently
+  // would overwrite each other, and the result would likely be less than 1000.
+  // Ref guarantees atomic updates without requiring manual locks.
   val concurrentCounter: ZIO[Any, Nothing, Unit] =
     for
       _       <- Console.printLine("--- Ref: Concurrent Counter ---").orDie

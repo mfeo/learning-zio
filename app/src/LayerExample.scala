@@ -46,6 +46,9 @@ object LayerExample extends ZIOAppDefault:
 
   val program: ZIO[UserRepo & EmailService, String, Unit] =
     for
+      // ZIO.service lets us say "I need this service" without caring how it's created.
+      // If you forget to provide these services at the bottom (.provide),
+      // the code will fail to compile, which is extremely safe!
       repo  <- ZIO.service[UserRepo]
       email <- ZIO.service[EmailService]
       _     <- Console.printLine("--- ZLayer Example ---").orDie

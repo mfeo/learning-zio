@@ -5,7 +5,10 @@ import zio.stm._
 
 object STMExample extends ZIOAppDefault:
 
-  // Atomic money transfer between two accounts
+  // Atomic money transfer between two accounts (Atomicity)
+  // STM guarantees that both the withdrawal and the deposit happen together.
+  // It will never happen that account A is debited, but the program crashes
+  // before account B receives the money. It's either all or nothing.
   def transfer(from: TRef[Long], to: TRef[Long], amount: Long): STM[String, Unit] =
     for
       balance <- from.get

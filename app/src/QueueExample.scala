@@ -58,6 +58,8 @@ object QueueExample extends ZIOAppDefault:
     yield ()
 
   // Back-pressure: bounded queue suspends offer when full
+  // When the queue reaches its limit, the producer calling 'offer' will automatically
+  // suspend (wait) until a consumer takes an item. No manual Thread.sleep or locks needed!
   val backPressure: ZIO[Any, Nothing, Unit] =
     for
       _ <- Console.printLine("--- Queue: Back-pressure ---").orDie

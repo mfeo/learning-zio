@@ -1,5 +1,7 @@
 # Learning ZIO
 
+🌍 [Read in Traditional Chinese (繁體中文)](./README_zh-TW.md)
+
 A hands-on project for learning [ZIO 2](https://zio.dev/) — a type-safe, composable library for async and concurrent programming in Scala.
 
 Each example is a standalone runnable app with corresponding tests. Read the code, run it, modify it, and experiment.

@@ -88,8 +88,10 @@ object ErrorExample extends ZIOAppDefault:
     yield ()
 
   // Defects vs Failures
-  // Failure = expected error in the E channel (business logic)
-  // Defect  = unexpected error (bug, null pointer) — crashes the fiber
+  // Failure = Expected business errors (e.g., UserNotFound). These are visible in type E,
+  //           forcing the developer to handle them.
+  // Defect  = Unexpected bugs (e.g., NullPointerException). These cause the fiber to crash
+  //           and do not appear in the type signature.
   val defectExample =
     for
       _ <- Console.printLine("--- Error: Defect vs Failure ---")
