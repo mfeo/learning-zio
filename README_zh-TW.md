@@ -44,17 +44,17 @@ mill app.test
 
 # 執行特定的範例程式
 mill app.runMain MainApp
-mill app.runMain examples.LayerExample
-mill app.runMain examples.StreamExample
-mill app.runMain examples.ScheduleExample
+mill app.runMain examples.ErrorExample
 mill app.runMain examples.RefExample
-mill app.runMain examples.STMExample
+mill app.runMain examples.ScheduleExample
+mill app.runMain examples.LayerExample
 mill app.runMain examples.ScopeExample
+mill app.runMain examples.StreamExample
+mill app.runMain examples.SemaphoreExample
 mill app.runMain examples.QueueExample
 mill app.runMain examples.HubExample
 mill app.runMain examples.PromiseExample
-mill app.runMain examples.SemaphoreExample
-mill app.runMain examples.ErrorExample
+mill app.runMain examples.STMExample
 mill app.runMain examples.ConcurrencyExample
 mill app.runMain examples.LoggingExample
 mill app.runMain examples.AspectExample
@@ -70,17 +70,17 @@ mill app.console
 app/
 ├── src/
 │   ├── MainApp.scala          # 進入點：基礎的 ZIO effect 與 Fiber 介紹
-│   ├── LayerExample.scala     # ZLayer：現代化的依賴注入 (Dependency Injection)
-│   ├── StreamExample.scala    # ZIO Streams：處理無窮無盡的資料流
-│   ├── ScheduleExample.scala  # Schedule：優雅地處理重試與排程
+│   ├── ErrorExample.scala     # Error：型別安全的錯誤處理與復原
 │   ├── RefExample.scala       # Ref：安全、無鎖的可變狀態
-│   ├── STMExample.scala       # STM：軟體交易記憶體 (多個變數的原子操作)
+│   ├── ScheduleExample.scala  # Schedule：優雅地處理重試與排程
+│   ├── LayerExample.scala     # ZLayer：現代化的依賴注入 (Dependency Injection)
 │   ├── ScopeExample.scala     # Scope：保證資源不外洩的生命週期管理
+│   ├── StreamExample.scala    # ZIO Streams：處理無窮無盡的資料流
+│   ├── SemaphoreExample.scala # Semaphore：控制並行數量的號誌 (例如：API 速率限制)
 │   ├── QueueExample.scala     # Queue：讓不同的 Fiber 互相傳遞訊息
 │   ├── HubExample.scala       # Hub：一對多的訊息廣播中心
 │   ├── PromiseExample.scala   # Promise：一次性的任務同步與交接
-│   ├── SemaphoreExample.scala # Semaphore：控制並行數量的號誌 (例如：API 速率限制)
-│   ├── ErrorExample.scala     # Error：型別安全的錯誤處理與復原
+│   ├── STMExample.scala       # STM：軟體交易記憶體 (多個變數的原子操作)
 │   ├── ConcurrencyExample.scala # 並發控制、超時與競速
 │   ├── LoggingExample.scala     # 結構化日誌與追蹤
 │   ├── AspectExample.scala      # 切面導向編程 (無侵入式修改)
@@ -129,7 +129,22 @@ app/
 
 ---
 
-### 2. Ref — 執行緒安全的可變狀態
+
+### 2. Error Handling — 失敗、缺陷與復原
+
+> **核心概念：** ZIO 嚴格區分了「預期中的業務錯誤 (Failures)」與「不可預期的崩潰缺陷 (Defects)」。
+
+- **Failure (預期的錯誤)**：例如「密碼錯誤」、「找不到用戶」。它會標示在 `ZIO[R, E, A]` 的 `E` 之中。編譯器會強迫你必須處理它（透過 `catchAll` 等語法）。
+- **Defect (不可預期的缺陷)**：例如「NullPointerException」、「陣列越界」。這種錯誤代表程式有 Bug，會導致 Fiber 直接崩潰（死掉），它不會出現在型別簽名中。
+
+**您將學到什麼：**
+- 如何將容易拋出 Exception 的危險程式碼，轉換為安全的 ZIO Effect。
+- 使用 `catchAll` 來優雅地捕捉並處理錯誤，給予使用者友善的回應。
+
+---
+
+
+### 3. Ref — 執行緒安全的可變狀態
 
 > **核心概念：** 在並行世界裡，傳統的 `var` 是危險的。`Ref` 提供了一個安全、無鎖 (Lock-free) 的變數容器。
 
@@ -142,7 +157,8 @@ app/
 
 ---
 
-### 3. Schedule — 重複與重試策略
+
+### 4. Schedule — 重複與重試策略
 
 > **核心概念：** 當遇到不穩定的外部服務（例如資料庫連線超時、API 暫時無回應），我們需要重試。`Schedule` 把「重試邏輯」變成可重複使用的策略。
 
@@ -155,7 +171,8 @@ app/
 
 ---
 
-### 4. ZLayer — 依賴注入 (Dependency Injection)
+
+### 5. ZLayer — 依賴注入 (Dependency Injection)
 
 > **核心概念：** 解耦 (Decoupling)。你的業務邏輯不應該自己建立資料庫連線，而是「要求」別人提供給它。
 
@@ -165,7 +182,8 @@ app/
 
 ---
 
-### 5. Scope — 資源管理 (再也不會忘記關閉檔案)
+
+### 6. Scope — 資源管理 (再也不會忘記關閉檔案)
 
 > **核心概念：** 有借有還，再借不難。`Scope` 保證你打開的資源一定會被關閉，即使程式發生例外崩潰。
 
@@ -174,7 +192,8 @@ app/
 
 ---
 
-### 6. ZIO Streams — 高效處理海量資料序列
+
+### 7. ZIO Streams — 高效處理海量資料序列
 
 > **核心概念：** 當你要處理 10GB 的日誌檔案時，你不能把它全部載入記憶體（會發生 OutOfMemory）。Stream 讓你可以像水管一樣，一小批一小批地處理資料。
 
@@ -185,7 +204,17 @@ app/
 
 ---
 
-### 7. Queue — Fiber 之間的溝通橋樑
+
+### 8. Semaphore — 控制並行數量的號誌
+
+> **核心概念：** 限制同時執行某段程式碼的 Fiber 數量。
+
+**生活化比喻：** 一間只有 5 個座位的餐廳。當 5 個座位都被佔滿時，後面的客人 (Fiber) 必須在門口排隊等待 (`acquire`)，直到有人吃完離開 (`release`)。非常適合用來做 API 的速率限制 (Rate Limiting)，避免瞬間流量灌爆後端伺服器。
+
+---
+
+
+### 9. Queue — Fiber 之間的溝通橋樑
 
 > **核心概念：** Fiber 之間不應該透過共享變數來溝通，而應該透過「傳遞訊息」來溝通。`Queue` 就是它們之間的郵筒。
 
@@ -194,7 +223,8 @@ app/
 
 ---
 
-### 8. Hub — 廣播給多個消費者
+
+### 10. Hub — 廣播給多個消費者
 
 > **核心概念：** `Queue` 是一對一（一封信只能被一個人拿走），而 `Hub` 是一對多（像廣播電台，所有聽眾都聽得到）。
 
@@ -203,7 +233,8 @@ app/
 
 ---
 
-### 9. Promise — 一次性 Fiber 同步
+
+### 11. Promise — 一次性 Fiber 同步
 
 > **核心概念：** 一個只能被裝入一次值的盒子。用來讓一個 Fiber 等待另一個 Fiber 的通知。
 
@@ -211,7 +242,8 @@ app/
 
 ---
 
-### 10. STM — 軟體交易記憶體 (Software Transactional Memory)
+
+### 12. STM — 軟體交易記憶體 (Software Transactional Memory)
 
 > **核心概念：** 當你需要同時更新「多個」獨立變數，且不能接受中途被打斷或出錯（這稱為交易 Transaction）。
 
@@ -219,26 +251,6 @@ app/
 
 ---
 
-### 11. Semaphore — 控制並行數量的號誌
-
-> **核心概念：** 限制同時執行某段程式碼的 Fiber 數量。
-
-**生活化比喻：** 一間只有 5 個座位的餐廳。當 5 個座位都被佔滿時，後面的客人 (Fiber) 必須在門口排隊等待 (`acquire`)，直到有人吃完離開 (`release`)。非常適合用來做 API 的速率限制 (Rate Limiting)，避免瞬間流量灌爆後端伺服器。
-
----
-
-### 12. Error Handling — 失敗、缺陷與復原
-
-> **核心概念：** ZIO 嚴格區分了「預期中的業務錯誤 (Failures)」與「不可預期的崩潰缺陷 (Defects)」。
-
-- **Failure (預期的錯誤)**：例如「密碼錯誤」、「找不到用戶」。它會標示在 `ZIO[R, E, A]` 的 `E` 之中。編譯器會強迫你必須處理它（透過 `catchAll` 等語法）。
-- **Defect (不可預期的缺陷)**：例如「NullPointerException」、「陣列越界」。這種錯誤代表程式有 Bug，會導致 Fiber 直接崩潰（死掉），它不會出現在型別簽名中。
-
-**您將學到什麼：**
-- 如何將容易拋出 Exception 的危險程式碼，轉換為安全的 ZIO Effect。
-- 使用 `catchAll` 來優雅地捕捉並處理錯誤，給予使用者友善的回應。
-
----
 
 ### 13. Concurrency — 並發控制、超時與競速
 
@@ -253,6 +265,7 @@ app/
 
 ---
 
+
 ### 14. Logging — 結構化日誌與追蹤
 
 > **核心概念：** ZIO 2 內建了強大的日誌系統，無需額外依賴即可實作結構化日誌、標註與追蹤。
@@ -266,6 +279,7 @@ app/
 
 ---
 
+
 ### 15. ZIOAspect — 切面導向編程
 
 > **核心概念：** Aspect (`@@`) 讓你能以「無侵入式」的方法修改 Effect 行為（例如加上重試、記錄日誌），讓核心業務邏輯保持乾淨。
@@ -276,6 +290,7 @@ app/
 - **自訂 Aspect** — 撰寫自己的 Aspect 來封裝重複的邏輯（例如：統一攔截錯誤或測量執行時間）。
 
 ---
+
 
 ### 16. FiberRef — Fiber 區域儲存
 
@@ -288,6 +303,7 @@ app/
 - **傳遞性 (Propagation)** — 子 Fiber 在建立 (`fork`) 的瞬間，會自動繼承父 Fiber 當時的 `FiberRef` 狀態。
 
 ---
+
 
 ### 17. Test Environment — 測試環境魔法
 
