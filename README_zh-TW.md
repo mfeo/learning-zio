@@ -18,6 +18,18 @@ ZIO 的核心型別非常強大，它由三個參數組成：`ZIO[R, E, A]`
 - **E (Error)**：這段程式**可能會發生什麼錯誤**？（例如：`IOException`, `UserNotFound`）。如果保證絕對不會失敗，型別就是 `Nothing`。
 - **A (Answer / Success)**：這段程式成功執行後**會回傳什麼結果**？（例如：`Int`, `String`）。如果只是執行動作而沒有回傳值，型別就是 `Unit`。
 
+**型別別名** — ZIO 提供了以下方便的型別別名，用於常見的組合：
+
+| 別名 | 展開為 | 說明 |
+|---|---|---|
+| `UIO[A]` | `ZIO[Any, Nothing, A]` | 絕不失敗，不需要外部環境 |
+| `URIO[R, A]` | `ZIO[R, Nothing, A]` | 絕不失敗，需要環境 `R` |
+| `Task[A]` | `ZIO[Any, Throwable, A]` | 可能拋出例外，不需要外部環境 |
+| `RIO[R, A]` | `ZIO[R, Throwable, A]` | 可能拋出例外，需要環境 `R` |
+| `IO[E, A]` | `ZIO[Any, E, A]` | 自訂錯誤型別，不需要外部環境 |
+
+> 💡 快速記憶：`U` 開頭代表「Unexceptional」（絕不失敗，`E = Nothing`）；`R` 開頭代表「需要 Requirement」（環境）。
+
 ---
 
 ## 技術堆疊

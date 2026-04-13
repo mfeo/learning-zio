@@ -144,6 +144,18 @@ ZIO[Any, Throwable, Unit]
      └────────────────── environment: needs nothing
 ```
 
+**Type aliases** — ZIO provides convenient aliases for common combinations:
+
+| Alias | Expands to | Description |
+|---|---|---|
+| `UIO[A]` | `ZIO[Any, Nothing, A]` | Never fails, no environment needed |
+| `URIO[R, A]` | `ZIO[R, Nothing, A]` | Never fails, requires environment `R` |
+| `Task[A]` | `ZIO[Any, Throwable, A]` | May throw, no environment needed |
+| `RIO[R, A]` | `ZIO[R, Throwable, A]` | May throw, requires environment `R` |
+| `IO[E, A]` | `ZIO[Any, E, A]` | Custom error type, no environment needed |
+
+> Tip: The `U` prefix means "Unexceptional" (`E = Nothing`). The `R` prefix means it requires an environment.
+
 ---
 
 
